@@ -1,0 +1,733 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+  <version>7.4</version>
+  <template_groups>
+    <template_group>
+      <uuid>4dc52456f61c4ba3b5834b355a8439a6</uuid>
+      <name>Templates/Network devices</name>
+    </template_group>
+  </template_groups>
+  <templates>
+    <template>
+      <uuid>46a31d078e024706a5bd0aa013088fed</uuid>
+      <template>FortiGate SNMP</template>
+      <name>FortiGate Firewall SNMP Monitoring</name>
+      <description>Generic template for Fortinet FortiGate firewalls.&#13;
+&#13;
+Monitors: CPU, Memory, Traffic (LLD), Temperature (LLD),&#13;
+VPN Tunnels (LLD), SD-WAN SLA/Jitter/Ping, Security (IPS/AV), SSL Certificates, HA&#13;
+&#13;
+Requirements:&#13;
+- SNMP v2c enabled on FortiGate (System > SNMP)&#13;
+- Macro {$SNMP_COMMUNITY} configured at host level&#13;
+- MIBs: FORTINET-FORTIGATE-MIB, IF-MIB</description>
+      <groups>
+        <group>
+          <name>Templates/Network devices</name>
+        </group>
+      </groups>
+
+      <!-- ======================== -->
+      <!-- MACROS -->
+      <!-- ======================== -->
+      <macros>
+        <macro>
+          <macro>{$SNMP_COMMUNITY}</macro>
+          <value>public</value>
+          <description>SNMP v2c community string - override at host level</description>
+        </macro>
+        <macro>
+          <macro>{$CPU_WARN}</macro>
+          <value>80</value>
+          <description>CPU usage warning threshold (%)</description>
+        </macro>
+        <macro>
+          <macro>{$CPU_CRIT}</macro>
+          <value>95</value>
+          <description>CPU usage critical threshold (%)</description>
+        </macro>
+        <macro>
+          <macro>{$MEM_WARN}</macro>
+          <value>85</value>
+          <description>Memory usage warning threshold (%)</description>
+        </macro>
+        <macro>
+          <macro>{$TEMP_WARN}</macro>
+          <value>65</value>
+          <description>Temperature warning threshold (Celsius)</description>
+        </macro>
+        <macro>
+          <macro>{$TEMP_CRIT}</macro>
+          <value>80</value>
+          <description>Temperature critical threshold (Celsius)</description>
+        </macro>
+        <macro>
+          <macro>{$SLA_LATENCY_WARN}</macro>
+          <value>100</value>
+          <description>SLA RTT warning threshold (ms)</description>
+        </macro>
+        <macro>
+          <macro>{$SLA_JITTER_WARN}</macro>
+          <value>50</value>
+          <description>SLA jitter warning threshold (ms)</description>
+        </macro>
+        <macro>
+          <macro>{$SLA_PACKETLOSS_WARN}</macro>
+          <value>5</value>
+          <description>SLA packet loss warning threshold (%)</description>
+        </macro>
+        <macro>
+          <macro>{$SSL_CERT_WARN_DAYS}</macro>
+          <value>30</value>
+          <description>Days before SSL certificate expiry to warn</description>
+        </macro>
+        <macro>
+          <macro>{$SSL_CERT_CRIT_DAYS}</macro>
+          <value>7</value>
+          <description>Days before SSL certificate expiry - critical alert</description>
+        </macro>
+      </macros>
+
+      <!-- ======================== -->
+      <!-- ITEMS -->
+      <!-- ======================== -->
+      <items>
+
+        <!-- ======================== -->
+        <item>
+          <uuid>5f12ef2ec541435d865de8d2a78fb510</uuid>
+          <name>CPU - Management CPU Usage</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.4.1.3.0</snmp_oid>
+          <key>fortigate.cpu.usage</key>
+          <delay>60s</delay>
+          <units>%</units>
+          <description>fgSysCpuUsage - Management CPU utilization</description>
+          <tags>
+            <tag><tag>component</tag><value>cpu</value></tag>
+          </tags>
+          <triggers>
+            <trigger>
+              <uuid>e1a79b7868ac43ffa91af56a714d05b6</uuid>
+              <expression>avg(/FortiGate SNMP/fortigate.cpu.usage,5m)>{$CPU_WARN}</expression>
+              <name>CPU usage above {$CPU_WARN}% on {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger>
+            <trigger>
+              <uuid>ca4f6d731a724bd7a3944b77414c1b95</uuid>
+              <expression>avg(/FortiGate SNMP/fortigate.cpu.usage,5m)>{$CPU_CRIT}</expression>
+              <name>CPU usage CRITICAL above {$CPU_CRIT}% on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>7b2d01ec8b584c8fb7ff1dbe270442de</uuid>
+          <name>CPU - IPS/AV Engine Usage</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.4.1.6.0</snmp_oid>
+          <key>fortigate.cpu.av</key>
+          <delay>60s</delay>
+          <units>%</units>
+          <description>fgSysCpuUsageNice - IPS/AV engine CPU utilization</description>
+          <tags>
+            <tag><tag>component</tag><value>cpu</value></tag>
+          </tags>
+        </item>
+
+        <!-- ======================== -->
+        <item>
+          <uuid>74a2f7e1a91a4c66a5032616ea4fecab</uuid>
+          <name>Memory Usage</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.4.1.4.0</snmp_oid>
+          <key>fortigate.mem.usage</key>
+          <delay>60s</delay>
+          <units>%</units>
+          <description>fgSysMemUsage - Memory usage percentage</description>
+          <tags>
+            <tag><tag>component</tag><value>memory</value></tag>
+          </tags>
+          <triggers>
+            <trigger>
+              <uuid>b5d02295aab34e5193107bda8b191b84</uuid>
+              <expression>avg(/FortiGate SNMP/fortigate.mem.usage,5m)>{$MEM_WARN}</expression>
+              <name>Memory usage above {$MEM_WARN}% on {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <!-- ======================== -->
+        <item>
+          <uuid>faaaa02db2974bee898038851523f81c</uuid>
+          <name>Active Sessions Count</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.4.1.8.0</snmp_oid>
+          <key>fortigate.sessions.count</key>
+          <delay>60s</delay>
+          <units>sessions</units>
+          <description>fgSysSesCount - Number of active firewall sessions</description>
+          <tags>
+            <tag><tag>component</tag><value>traffic</value></tag>
+          </tags>
+        </item>
+
+        <!-- SLA RTT, Jitter and Packet Loss are discovered via LLD (see Discovery Rules) -->
+
+        <!-- ICMP Ping from Zabbix server -->
+        <item>
+          <uuid>b3f791c2e75246da9971616ea49aff0d</uuid>
+          <name>ICMP Ping - Response Time</name>
+          <type>SIMPLE</type>
+          <key>icmppingsec</key>
+          <delay>60s</delay>
+          <units>s</units>
+          <description>ICMP round-trip time from Zabbix server to FortiGate</description>
+          <tags>
+            <tag><tag>component</tag><value>sla</value></tag>
+          </tags>
+        </item>
+
+        <item>
+          <uuid>ec9ef0cea6e540408b3d41d8d1214609</uuid>
+          <name>ICMP Ping - Availability</name>
+          <type>SIMPLE</type>
+          <key>icmpping</key>
+          <delay>60s</delay>
+          <description>1=reachable, 0=unreachable</description>
+          <tags>
+            <tag><tag>component</tag><value>sla</value></tag>
+          </tags>
+          <triggers>
+            <trigger>
+              <uuid>e72614469e404dc5975f5caba1ed6368</uuid>
+              <expression>max(/FortiGate SNMP/icmpping,#3)=0</expression>
+              <name>{HOST.NAME} is UNREACHABLE (3 aufeinanderfolgende Fehler)</name>
+              <priority>DISASTER</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <!-- ======================== -->
+        <item>
+          <uuid>b4f711241b0e41fbac8aba56dd3bfae1</uuid>
+          <name>VPN - Total Active IPSec Tunnels</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.12.1.2.0</snmp_oid>
+          <key>fortigate.vpn.total.tunnels</key>
+          <delay>60s</delay>
+          <units>tunnels</units>
+          <description>fgVpnTunTotalTunnels - Total number of active IPSec tunnels</description>
+          <tags>
+            <tag><tag>component</tag><value>vpn</value></tag>
+          </tags>
+        </item>
+
+        <!-- ======================== -->
+        <item>
+          <uuid>03e2f5137ed346fcbf0a6dadbeafdcb0</uuid>
+          <name>Security - IPS Intrusions Detected</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.9.2.1.0</snmp_oid>
+          <key>fortigate.ips.detected</key>
+          <delay>300s</delay>
+          <description>fgIpsIntrusionsDetected - Cumulative IPS detections</description>
+          <tags>
+            <tag><tag>component</tag><value>security</value></tag>
+          </tags>
+          <triggers>
+            <trigger>
+              <uuid>fe53e3f925164b94ba716e318e585e4f</uuid>
+              <expression>change(/FortiGate SNMP/fortigate.ips.detected)>100</expression>
+              <name>IPS: High intrusion detection rate on {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>7018d1793202436c952fe30f2627fab4</uuid>
+          <name>Security - AV Viruses Detected</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.8.2.1.0</snmp_oid>
+          <key>fortigate.av.detected</key>
+          <delay>300s</delay>
+          <description>fgAvVirusDetected - Total viruses detected by AV engine</description>
+          <tags>
+            <tag><tag>component</tag><value>security</value></tag>
+          </tags>
+        </item>
+
+        <!-- ======================== -->
+        <item>
+          <uuid>ea61324c79234bb0985ff6cdb6e49e9c</uuid>
+          <name>HA - Cluster Mode</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.13.1.1.0</snmp_oid>
+          <key>fortigate.ha.mode</key>
+          <delay>300s</delay>
+          <description>fgHaSystemMode: 1=standalone, 2=active-active, 3=active-passive</description>
+          <valuemap>
+            <name>FortiGate HA Mode</name>
+          </valuemap>
+          <tags>
+            <tag><tag>component</tag><value>ha</value></tag>
+          </tags>
+        </item>
+
+        <!-- ======================== -->
+        <item>
+          <uuid>ed6d3e07f69445b7a9ddd35fd99af287</uuid>
+          <name>System - Firmware Version</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.4.1.12356.101.4.1.1.0</snmp_oid>
+          <key>fortigate.sys.version</key>
+          <delay>3600s</delay>
+          <value_type>CHAR</value_type>
+          <description>fgSysVersion - Current FortiOS firmware version</description>
+          <tags>
+            <tag><tag>component</tag><value>system</value></tag>
+          </tags>
+        </item>
+
+        <item>
+          <uuid>dc870cf42d4b44479d634416ef0cca9b</uuid>
+          <name>System - Uptime</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>1.3.6.1.2.1.1.3.0</snmp_oid>
+          <key>fortigate.sys.uptime</key>
+          <delay>300s</delay>
+          <units>uptime</units>
+          <preprocessing>
+            <step>
+              <type>MULTIPLIER</type>
+              <parameters>
+                <parameter>0.01</parameter>
+              </parameters>
+            </step>
+          </preprocessing>
+          <description>sysUpTime - System uptime (centiseconds converted to seconds)</description>
+          <tags>
+            <tag><tag>component</tag><value>system</value></tag>
+          </tags>
+          <triggers>
+            <trigger>
+              <uuid>6cc202fd3f2b496185c0991f6dc28208</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.sys.uptime)&lt;600</expression>
+              <name>{HOST.NAME} has been restarted (uptime &lt; 10 min)</name>
+              <priority>WARNING</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+      </items>
+
+      <!-- ======================== -->
+      <!-- DISCOVERY RULES (LLD) -->
+      <!-- ======================== -->
+      <discovery_rules>
+
+        <!-- LLD: SD-WAN PERFORMANCE SLA -->
+        <!-- fgSdwanSlaTable OID base: 1.3.6.1.4.1.12356.101.4.9.2.1 -->
+        <!-- .2=Name .4=PacketLoss .5=RTT .6=Jitter .9=MOS .14=OutboundInterface -->
+        <discovery_rule>
+          <uuid>9f3cb54f81e3412ebd0a3c81aff25753</uuid>
+          <name>SD-WAN Performance SLA Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#SLAINDEX},1.3.6.1.4.1.12356.101.4.9.2.1.1,{#SLANAME},1.3.6.1.4.1.12356.101.4.9.2.1.2,{#SLAIFACE},1.3.6.1.4.1.12356.101.4.9.2.1.14]</snmp_oid>
+          <key>fortigate.sdwan.sla.discovery</key>
+          <delay>1h</delay>
+          <filter>
+            <evaltype>AND</evaltype>
+            <conditions>
+              <condition>
+                <macro>{#SLANAME}</macro>
+                <value>^YOUR_SLA_NAME</value>
+                <operator>MATCHES_REGEX</operator>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <description>Auto-discovers SD-WAN Performance SLA entries. Adjust filter to match your SLA names.</description>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>cc4dcd6c501945d2872c61e71c89dd33</uuid>
+              <name>SLA [{#SLANAME}] [{#SLAIFACE}]: RTT</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.4.1.12356.101.4.9.2.1.5.{#SLAINDEX}</snmp_oid>
+              <key>fortigate.sdwan.sla.rtt[{#SLAINDEX}]</key>
+              <delay>60s</delay>
+              <units>ms</units>
+              <value_type>FLOAT</value_type>
+              <description>SD-WAN SLA Round-Trip-Zeit in ms</description>
+              <tags>
+                <tag><tag>component</tag><value>sla</value></tag>
+              </tags>
+            </item_prototype>
+            <item_prototype>
+              <uuid>a3e46ec560ff4e8fa460e4ac9566467f</uuid>
+              <name>SLA [{#SLANAME}] [{#SLAIFACE}]: Jitter</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.4.1.12356.101.4.9.2.1.6.{#SLAINDEX}</snmp_oid>
+              <key>fortigate.sdwan.sla.jitter[{#SLAINDEX}]</key>
+              <delay>60s</delay>
+              <units>ms</units>
+              <value_type>FLOAT</value_type>
+              <description>SD-WAN SLA Jitter in ms</description>
+              <tags>
+                <tag><tag>component</tag><value>sla</value></tag>
+              </tags>
+            </item_prototype>
+            <item_prototype>
+              <uuid>0b6e1e374e29460ca1ee7e0e9f0f3081</uuid>
+              <name>SLA [{#SLANAME}] [{#SLAIFACE}]: Packet Loss</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.4.1.12356.101.4.9.2.1.4.{#SLAINDEX}</snmp_oid>
+              <key>fortigate.sdwan.sla.pktloss[{#SLAINDEX}]</key>
+              <delay>60s</delay>
+              <units>%</units>
+              <description>SD-WAN SLA Paketverlust in Prozent</description>
+              <tags>
+                <tag><tag>component</tag><value>sla</value></tag>
+              </tags>
+            </item_prototype>
+            <item_prototype>
+              <uuid>f171b2e04b5e439d852a41ec4a325152</uuid>
+              <name>SLA [{#SLANAME}] [{#SLAIFACE}]: MOS</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.4.1.12356.101.4.9.2.1.19.{#SLAINDEX}</snmp_oid>
+              <key>fortigate.sdwan.sla.mos[{#SLAINDEX}]</key>
+              <delay>60s</delay>
+              <value_type>FLOAT</value_type>
+              <description>SD-WAN SLA MOS-Score (Mean Opinion Score)</description>
+              <tags>
+                <tag><tag>component</tag><value>sla</value></tag>
+              </tags>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>d6a04e18078f452b81ce936dc147500a</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.sdwan.sla.rtt[{#SLAINDEX}])>{$SLA_LATENCY_WARN}</expression>
+              <name>SLA [{#SLANAME}] [{#SLAIFACE}]: RTT ueber {$SLA_LATENCY_WARN}ms auf {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger_prototype>
+            <trigger_prototype>
+              <uuid>fb543d72ccec4820a4e406dbdc5e4bb7</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.sdwan.sla.jitter[{#SLAINDEX}])>{$SLA_JITTER_WARN}</expression>
+              <name>SLA [{#SLANAME}] [{#SLAIFACE}]: Jitter ueber {$SLA_JITTER_WARN}ms auf {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger_prototype>
+            <trigger_prototype>
+              <uuid>a423b910dbea47d89a170cf377ac0cd8</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.sdwan.sla.pktloss[{#SLAINDEX}])>{$SLA_PACKETLOSS_WARN}</expression>
+              <name>SLA [{#SLANAME}] [{#SLAIFACE}]: Paketverlust ueber {$SLA_PACKETLOSS_WARN}% auf {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+        <discovery_rule>
+          <uuid>307ba23fc2da4e7a8908bd261f736edf</uuid>
+          <name>Network Interface Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#IFINDEX},1.3.6.1.2.1.2.2.1.1,{#IFNAME},1.3.6.1.2.1.31.1.1.1.1,{#IFDESCR},1.3.6.1.2.1.2.2.1.2,{#IFTYPE},1.3.6.1.2.1.2.2.1.3,{#IFOPERSTATUS},1.3.6.1.2.1.2.2.1.8]</snmp_oid>
+          <key>fortigate.net.if.discovery</key>
+          <delay>1h</delay>
+          <filter>
+            <evaltype>AND</evaltype>
+            <conditions>
+              <!-- Exclude internal virtual interfaces -->
+              <condition>
+                <macro>{#IFNAME}</macro>
+                <value>^(ssl\.root|naf\.root|l2t\.root|wqt\.root|wqtn\..+)$</value>
+                <operator>NOT_MATCHES_REGEX</operator>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <description>Auto-discovers all network interfaces and creates traffic and status items</description>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>4a51d2650bb649b087cc7b9b1123048a</uuid>
+              <name>Interface {#IFNAME}: Traffic In</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.31.1.1.1.6.{#IFINDEX}</snmp_oid>
+              <key>fortigate.if.in[{#IFINDEX}]</key>
+              <delay>60s</delay>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <parameters>
+                    <parameter/>
+                  </parameters>
+                </step>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <parameters>
+                    <parameter>8</parameter>
+                  </parameters>
+                </step>
+              </preprocessing>
+            </item_prototype>
+            <item_prototype>
+              <uuid>deedcf24afa241309b4823937a533627</uuid>
+              <name>Interface {#IFNAME}: Traffic Out</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.31.1.1.1.10.{#IFINDEX}</snmp_oid>
+              <key>fortigate.if.out[{#IFINDEX}]</key>
+              <delay>60s</delay>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <parameters>
+                    <parameter/>
+                  </parameters>
+                </step>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <parameters>
+                    <parameter>8</parameter>
+                  </parameters>
+                </step>
+              </preprocessing>
+            </item_prototype>
+            <item_prototype>
+              <uuid>dd0f7a14798245f585b867c2d9452b30</uuid>
+              <name>Interface {#IFNAME}: Operational Status</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.2.1.2.2.1.8.{#IFINDEX}</snmp_oid>
+              <key>fortigate.if.operstatus[{#IFINDEX}]</key>
+              <delay>60s</delay>
+              <valuemap>
+                <name>Interface Operational Status</name>
+              </valuemap>
+              <description>ifOperStatus: 1=up, 2=down, 3=testing</description>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>695bee43644b42c8afa740b6debb39ea</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.if.operstatus[{#IFINDEX}])=2 and last(/FortiGate SNMP/fortigate.if.operstatus[{#IFINDEX}],#1:now-5m)=1</expression>
+              <name>Interface {#IFNAME} went DOWN on {HOST.NAME}</name>
+              <priority>AVERAGE</priority>
+              <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
+              <recovery_expression>last(/FortiGate SNMP/fortigate.if.operstatus[{#IFINDEX}])=1</recovery_expression>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+        <!-- LLD: VPN TUNNELS -->
+        <!-- Discovers all IPSec VPN tunnels via fgVpnTunTable -->
+        <discovery_rule>
+          <uuid>cb34bedd12694d4f840830d1aa7417fc</uuid>
+          <name>VPN IPSec Tunnel Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#VPNINDEX},1.3.6.1.4.1.12356.101.12.2.2.1.1,{#VPNNAME},1.3.6.1.4.1.12356.101.12.2.2.1.3]</snmp_oid>
+          <key>fortigate.vpn.discovery</key>
+          <delay>1h</delay>
+          <description>Erkennt automatisch alle IPSec-VPN-Tunnel aus fgVpnTunTable</description>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>eb1be328931e4e099936e04d4e276061</uuid>
+              <name>VPN [{#VPNNAME}]: Status</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.4.1.12356.101.12.2.2.1.20.{#VPNINDEX}</snmp_oid>
+              <key>fortigate.vpn.status[{#VPNINDEX}]</key>
+              <delay>60s</delay>
+              <description>fgVpnTunEntStatus: 1=up, 2=down</description>
+              <valuemap>
+                <name>FortiGate VPN Status</name>
+              </valuemap>
+              <tags>
+                <tag><tag>component</tag><value>vpn</value></tag>
+              </tags>
+            </item_prototype>
+            <item_prototype>
+              <uuid>db90b2af6775498c907e98b6fcfd4546</uuid>
+              <name>VPN [{#VPNNAME}]: Traffic In</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.4.1.12356.101.12.2.2.1.17.{#VPNINDEX}</snmp_oid>
+              <key>fortigate.vpn.in[{#VPNINDEX}]</key>
+              <delay>60s</delay>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <parameters>
+                    <parameter/>
+                  </parameters>
+                </step>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <parameters>
+                    <parameter>8</parameter>
+                  </parameters>
+                </step>
+              </preprocessing>
+              <description>fgVpnTunEntInOctets - Inbound bytes on this tunnel</description>
+            </item_prototype>
+            <item_prototype>
+              <uuid>c552b38bd6a34b01b35ede7c1dc460fe</uuid>
+              <name>VPN [{#VPNNAME}]: Traffic Out</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.4.1.12356.101.12.2.2.1.18.{#VPNINDEX}</snmp_oid>
+              <key>fortigate.vpn.out[{#VPNINDEX}]</key>
+              <delay>60s</delay>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <parameters>
+                    <parameter/>
+                  </parameters>
+                </step>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <parameters>
+                    <parameter>8</parameter>
+                  </parameters>
+                </step>
+              </preprocessing>
+              <description>fgVpnTunEntOutOctets - Outbound bytes on this tunnel</description>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>7a74d51f0813432cbdeb7c7281da5611</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.vpn.status[{#VPNINDEX}])=2</expression>
+              <name>VPN Tunnel [{#VPNNAME}] is DOWN on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+              <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
+              <recovery_expression>last(/FortiGate SNMP/fortigate.vpn.status[{#VPNINDEX}])=1</recovery_expression>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+        <!-- LLD: TEMPERATURE SENSORS -->
+        <discovery_rule>
+          <uuid>05f94b737ede453da00c8c3c6c381b88</uuid>
+          <name>Hardware Temperature Sensor Discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#SENSORINDEX},1.3.6.1.4.1.12356.101.4.6.2.1.1,{#SENSORNAME},1.3.6.1.4.1.12356.101.4.6.2.1.2,{#SENSORTYPE},1.3.6.1.4.1.12356.101.4.6.2.1.4]</snmp_oid>
+          <key>fortigate.hw.sensor.discovery</key>
+          <delay>1h</delay>
+          <filter>
+            <evaltype>AND</evaltype>
+            <conditions>
+              <condition>
+                <macro>{#SENSORTYPE}</macro>
+                <value>^1$</value>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <description>Auto-discovers hardware temperature sensors (fgHwSensorTable, type=1)</description>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>c05139953b6d455ea4f2b7f3cc1858a0</uuid>
+              <name>Temperature: {#SENSORNAME}</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>1.3.6.1.4.1.12356.101.4.6.2.1.3.{#SENSORINDEX}</snmp_oid>
+              <key>fortigate.hw.temp[{#SENSORINDEX}]</key>
+              <delay>120s</delay>
+              <units>°C</units>
+              <description>fgHwSensorEntValue - Temperature reading in Celsius</description>
+              <tags>
+                <tag><tag>component</tag><value>temperature</value></tag>
+              </tags>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>8879ac42c75447f48565fb8c1c7e52be</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.hw.temp[{#SENSORINDEX}])>{$TEMP_WARN}</expression>
+              <name>Temperature [{#SENSORNAME}] above {$TEMP_WARN}°C on {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger_prototype>
+            <trigger_prototype>
+              <uuid>72388ffec0d840e88a7c9c651161fe76</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.hw.temp[{#SENSORINDEX}])>{$TEMP_CRIT}</expression>
+              <name>Temperature [{#SENSORNAME}] CRITICAL above {$TEMP_CRIT}°C on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+        <!-- SSL CERTIFICATES -->
+        <!-- Use HTTP Agent item pointing to https://YOUR_FORTIGATE_IP -->
+        <!-- Use web.certificate.get or an external script. See documentation. -->
+        <discovery_rule>
+          <uuid>cc1d99f897f74f1695afec3cf8882f5c</uuid>
+          <name>SSL Certificate Check</name>
+          <type>EXTERNAL</type>
+          <key>fortigate.ssl.cert.discovery</key>
+          <delay>86400s</delay>
+          <description>SSL certificate expiry check. Use web.certificate.get (Zabbix 5.4+) or an external script.
+Example script: /usr/lib/zabbix/externalscripts/check_ssl_cert.sh</description>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>1542c8f3bfe443478d50b3d0dcbd0b1a</uuid>
+              <name>SSL Certificate [{#CERT_NAME}]: Days Until Expiry</name>
+              <type>EXTERNAL</type>
+              <key>fortigate.ssl.cert.expiry[{#CERT_NAME}]</key>
+              <delay>86400s</delay>
+              <units>days</units>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>71ca40e3281e4d438d44e808a64787b3</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.ssl.cert.expiry[{#CERT_NAME}])&lt;{$SSL_CERT_WARN_DAYS}</expression>
+              <name>SSL Certificate [{#CERT_NAME}] expires in less than {$SSL_CERT_WARN_DAYS} days on {HOST.NAME}</name>
+              <priority>WARNING</priority>
+            </trigger_prototype>
+            <trigger_prototype>
+              <uuid>0270ce3113814dcfafae96d95789aa67</uuid>
+              <expression>last(/FortiGate SNMP/fortigate.ssl.cert.expiry[{#CERT_NAME}])&lt;{$SSL_CERT_CRIT_DAYS}</expression>
+              <name>SSL Certificate [{#CERT_NAME}] expires CRITICALLY in less than {$SSL_CERT_CRIT_DAYS} days on {HOST.NAME}</name>
+              <priority>HIGH</priority>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+
+      </discovery_rules>
+
+      <!-- ======================== -->
+      <!-- VALUE MAPS -->
+      <!-- ======================== -->
+      <valuemaps>
+        <valuemap>
+          <uuid>f8bb24fa0d5c4780a3a343a6812a1d55</uuid>
+          <name>FortiGate VPN Status</name>
+          <mappings>
+            <mapping><value>1</value><newvalue>Up</newvalue></mapping>
+            <mapping><value>2</value><newvalue>Down</newvalue></mapping>
+          </mappings>
+        </valuemap>
+        <valuemap>
+          <uuid>eb3860a3b22043c8827fff77c47f2efa</uuid>
+          <name>FortiGate HA Mode</name>
+          <mappings>
+            <mapping><value>1</value><newvalue>Standalone</newvalue></mapping>
+            <mapping><value>2</value><newvalue>Active-Active</newvalue></mapping>
+            <mapping><value>3</value><newvalue>Active-Passive</newvalue></mapping>
+          </mappings>
+        </valuemap>
+        <valuemap>
+          <uuid>0b5c6c6f6292484ab608b6eccd9f0013</uuid>
+          <name>Interface Operational Status</name>
+          <mappings>
+            <mapping><value>1</value><newvalue>Up</newvalue></mapping>
+            <mapping><value>2</value><newvalue>Down</newvalue></mapping>
+            <mapping><value>3</value><newvalue>Testing</newvalue></mapping>
+          </mappings>
+        </valuemap>
+      </valuemaps>
+
+    </template>
+  </templates>
+</zabbix_export>
